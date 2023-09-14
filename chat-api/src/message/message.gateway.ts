@@ -25,9 +25,11 @@ export class MessageGateway
 
   @SubscribeMessage('user-take')
   handleUserTake(client: Socket, payload: any): void {
-    console.log({ payload });
+    const index = this.clients.findIndex(
+      ({ client: _client }) => _client.id === client.id,
+    );
 
-    this.usernames.push(payload);
+    this.clients.splice(index, 1, { client, username: payload });
   }
 
   @SubscribeMessage('user-check')

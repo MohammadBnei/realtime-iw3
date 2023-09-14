@@ -16,6 +16,8 @@ export default function Home() {
 
   const [username, setUsername] = useState("");
 
+  const [exists, setExists] = useState(true);
+
   useEffect(() => {
     socket.on("connect", () => {
       console.log("connected");
@@ -27,7 +29,7 @@ export default function Home() {
     });
 
     socket.on("user-exist", (data) => {
-      console.log("user exists ?", data);
+      setExists(data);
     });
   }, []);
 
@@ -35,7 +37,7 @@ export default function Home() {
     e.preventDefault();
 
     socket.emit("message", {
-      username: "me",
+      username,
       content,
       timeSent: new Date().toUTCString(),
     });
@@ -46,7 +48,7 @@ export default function Home() {
   const handleUsername = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    socket.emit("user-take", username);
+    if (!exists) socket.emit("user-take", username);
   };
 
   useEffect(() => {
@@ -60,7 +62,7 @@ export default function Home() {
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          className="input"
+          className={`input ${exists ? "input-error" : ""}`}
         />
         <button type="submit" className="btn btn-primary">
           Join
@@ -68,12 +70,26 @@ export default function Home() {
       </form>
       <div className="card w-96 h-96 shadow-xl">
         <div className="card-body w-full overflow-y-scroll">
-          {messages.map((message) => (
-            <div className="chat chat-start" key={message.timeSent}>
-              <div className="chat-header">{message.username}</div>
-              <div className="chat-bubble">{message.content}</div>
-            </div>
-          ))}
+          {messages.map((message) => {
+            if (message.username === username) {
+              return (
+                <div
+                  className="chat chat-end chat-bubble-secondary"
+                  key={message.timeSent}
+                >
+                  <div className="chat-header">{message.username}</div>
+                  <div className="chat-bubble">{message.content}</div>
+                </div>
+              );
+            } else {
+              return (
+                <div className="chat chat-start" key={message.timeSent}>
+                  <div className="chat-header">{message.username}</div>
+                  <div className="chat-bubble">{message.content}</div>
+                </div>
+              );
+            }
+          })}
         </div>
         <form onSubmit={handleSubmit} className="justify-self-end">
           <input
