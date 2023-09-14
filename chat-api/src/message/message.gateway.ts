@@ -11,17 +11,10 @@ import { Server, Socket } from 'socket.io';
 export class MessageGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
-  handleConnection(client: any, ...args: any[]) {
-    console.log({ id: client.id });
-  }
-  handleDisconnect(client: any) {
-    console.log({ id: client.id });
-  }
-  
   @WebSocketServer()
   server: Server;
 
-  usernames: string[] = [];
+  private clients: { client: Socket; username: string }[] = [];
 
   @SubscribeMessage('message')
   handleMessage(client: Socket, payload: any): string {
@@ -41,7 +34,18 @@ export class MessageGateway
   handleUserCheck(client: Socket, payload: any): void {
     client.emit(
       'user-exist',
-      this.usernames.some((u) => u === payload),
+      this.clients.some(({ username: u }) => u === payload),
     );
+  }
+
+  handleConnection(client: any, ...args: any[]) {
+    this.clients.push({ client, username: '' });
+    console.log({ id: client.id });
+  }
+  handleDisconnect(client: any) {
+    this.clients = this.clients.filter(
+      ({ client: _client }) => _client.id !== client.id,
+    );
+    console.log({ disconnectid: client.id });
   }
 }
